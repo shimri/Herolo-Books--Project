@@ -12,7 +12,7 @@ export default function books(state = [], action = {}) {
       ];
     case SET_BOOKS:
     var books = []
-     action.books.map(item => {
+     action.books.forEach(item => {
         item.title = _.startCase(_.toLower(item.title));
         item.title.replace(/\W/g, '');
         books.push(item);

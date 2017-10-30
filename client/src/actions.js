@@ -77,6 +77,7 @@ export function fetchBooks() {
   return dispatch => {
     fetch('/api/books')
       .then(res => res.json())
-      .then(data => dispatch(setBooks(data.books)));
+      .then(data => dispatch(setBooks(data.books)))
+      .catch(err =>  [])
   }
 }

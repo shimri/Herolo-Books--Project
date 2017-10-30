@@ -4,10 +4,9 @@ import { Form, Button, Grid, Segment, Image } from "semantic-ui-react";
 import InlineError from "../messages/InlineError";
 import {editBook} from '../../actions';
 import {connect} from 'react-redux';
-import DatePicker from 'react-datepicker';
-import moment from 'moment';
-import 'react-datepicker/dist/react-datepicker.css';
-import 'react-datepicker/dist/react-datepicker-cssmodules.css';
+import DayPicker from 'react-day-picker';
+import 'react-day-picker/lib/style.css';
+
 
 
 class BookForm extends React.Component {
@@ -20,13 +19,30 @@ class BookForm extends React.Component {
         title: this.props.book.title,
         author_fl: this.props.book.author_fl,
         cover: this.props.book.cover,
-        dateacquired_date: this.props.book.dateacquired_date
+        dateacquired_date: this.parseDate(this.props.book.dateacquired_date)
       },
-      startDate: moment(),
+      startDate: new Date(),
       loading: false,
       errors: {}
     };
     this.handleChange = this.handleChange.bind(this);
+  }
+
+  parseDate = (date) => {
+    let today = new Date(date);
+    let dd = today.getDate();
+    let mm = today.getMonth()+1; //January is 0!
+    let yyyy = today.getFullYear();
+
+    if(dd<10){
+        dd='0'+dd;
+    }
+
+    if(mm<10){
+        mm='0'+mm;
+    }
+    let dateResult = dd+'/'+mm+'/'+yyyy;
+    return dateResult;
   }
 
 
@@ -63,25 +79,26 @@ class BookForm extends React.Component {
     }
   };
 
-  validate = data => {
+  validate = (data,selectedDate) => {
     const errors = {};
+    let now = new Date();
+    let then = new Date(selectedDate);
+    let isAfter = now.getTime() < then.getTime() ? true : false;
+
     if (!data.title) errors.title = "Can't be blank";
     if (!data.author_fl) errors.author_fl = "Can't be blank";
-    var now = moment().format('YYYY-MM-DD');
-    var then = data.dateacquired_date;
-    var isAfter = moment(then).isAfter(now);
     if (isAfter) errors.dateacquired_date = "Your date input is invalid";
     return errors;
   };
 
   handleChange(date) {
-    const errors = this.validate(this.state.data);
+    const errors = this.validate(this.state.data,date);
     this.setState({ errors });
     if (Object.keys(errors).length === 0) {
       this.setState({
           ...this.state,
           startDate: date,
-          data:{ ...this.state.data,dateacquired_date:moment(date._d).format("YYYY-MM-DD")}
+          data:{ ...this.state.data,dateacquired_date:this.parseDate(date)}
       });
     }
   }
@@ -120,9 +137,9 @@ class BookForm extends React.Component {
                   />
                   {errors.author_fl && <InlineError text={errors.author_fl} />}
                 </Form.Field>
-                <DatePicker
-                      selected={this.state.startDate}
-                      onChange={this.handleChange}
+                <DayPicker
+                      selectedDays={this.state.startDate}
+                      onDayClick={this.handleChange}
                 />
                 {errors.dateacquired_date && <InlineError text={errors.dateacquired_date} />}
               </Grid.Column>

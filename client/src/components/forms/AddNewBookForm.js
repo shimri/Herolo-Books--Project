@@ -6,11 +6,9 @@ import InlineError from "../messages/InlineError";
 import {saveBook} from '../../actions'
 import {connect} from 'react-redux';
 import shortid from 'shortid'
-import DatePicker from 'react-datepicker';
-import moment from 'moment';
-import 'react-datepicker/dist/react-datepicker.css';
-import 'react-datepicker/dist/react-datepicker-cssmodules.css';
-import _ from 'lodash'
+import DayPicker from 'react-day-picker';
+import 'react-day-picker/lib/style.css';
+import _ from 'lodash';
 
 
 class AddNewBookForm extends React.Component {
@@ -23,9 +21,9 @@ class AddNewBookForm extends React.Component {
         title: '',
         author_fl: '',
         cover:'',
-        dateacquired_date: moment().format('YYYY-MM-DD')
+        dateacquired_date: this.parseDate(new Date())
       },
-      startDate: moment(),
+      startDate: new Date(),
       loading: false,
       redirect:false,
       errors: {}
@@ -56,17 +54,34 @@ class AddNewBookForm extends React.Component {
     }
   };
 
-  validate = data => {
+  parseDate = (date) => {
+    let today = date;
+    let dd = today.getDate();
+    let mm = today.getMonth()+1; //January is 0!
+    let yyyy = today.getFullYear();
+
+    if(dd<10){
+        dd='0'+dd;
+    }
+
+    if(mm<10){
+        mm='0'+mm;
+    }
+    let dateResult = dd+'/'+mm+'/'+yyyy;
+    return dateResult;
+  }
+
+  validate = (data,selectedDate) => {
     const errors = {};
-    let now = moment().format('YYYY-MM-DD');
-    let then = data.dateacquired_date;
-    let isAfter = moment(then).isAfter(now);
+    let now = new Date();
+    let then = new Date(selectedDate);
+    let isAfter = now.getTime() < then.getTime() ? true : false;
 
     if (!data.title) errors.title = "Can't be blank";
     if (!data.author_fl) errors.author_fl = "Can't be blank";
     if (!data.cover) errors.cover = "Can't be blank";
     if (isAfter) errors.dateacquired_date = "Your date input is invalid";
-    this.props.books.map(item => {
+    this.props.books.forEach(item => {
       item.title = _.startCase(_.toLower(item.title));
       item.title.replace(/\W/g, '');
       if (item.title === data.title) errors.title = "Duplicated Book, please change your tilte";
@@ -75,13 +90,13 @@ class AddNewBookForm extends React.Component {
   };
 
   handleChange(date) {
-    const errors = this.validate(this.state.data);
+    const errors = this.validate(this.state.data,date);
     this.setState({ errors });
     if (Object.keys(errors).length === 0) {
       this.setState({
           ...this.state,
           startDate: date,
-          data:{ ...this.state.data,dateacquired_date:moment(date._d).format("YYYY-MM-DD")}
+          data:{ ...this.state.data,dateacquired_date:this.parseDate(date)}
       });
     }
   }
@@ -132,9 +147,9 @@ class AddNewBookForm extends React.Component {
                   />
                   {errors.cover && <InlineError text={errors.cover} />}
                 </Form.Field>
-                <DatePicker
-                      selected={this.state.startDate}
-                      onChange={this.handleChange}
+                <DayPicker
+                      selectedDays={this.state.startDate}
+                      onDayClick={this.handleChange}
                 />
                 {errors.dateacquired_date && <InlineError text={errors.dateacquired_date} />}
               </Grid.Column>
